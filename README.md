@@ -27,9 +27,9 @@ The config holds the sttings required for running the program.
 ```json
 {
   "vault": {
-	"userfield": "username",         # field in vault that holds the username
-	"passfield": "password",         # field in vault that hilds the password
-	"addr": "http://localhost:8200", # vault addr
+    "userfield": "username",         # field in vault that holds the username
+    "passfield": "password",         # field in vault that hilds the password
+    "addr": "http://localhost:8200", # vault addr
     "mountpath": "secret",           # secrets k/v mount
     "paths": [                       # array of paths to sync from vault
       "password/services/a",
@@ -39,8 +39,8 @@ The config holds the sttings required for running the program.
     ]
   },
   "bitwarden": {
-	"local": true,                   # let syncer manage `bw sync` command
-	"addr": "http://localhost:8087", # BW api endpoint
+    "local": true,                   # let syncer manage `bw sync` command
+    "addr": "http://localhost:8087", # BW api endpoint
     "paths": [                       # array of paths to sync from bitwarden
       "password/services/e",
       "password/services/f"
