@@ -1,0 +1,22 @@
+{
+  "vault": {
+	"userfield": "username",
+	"passfield": "password",
+	"addr": "http://localhost:8200",
+    "mountpath": "secret",
+    "paths": [
+      "password/services/a",
+      "password/services/b",
+      "password/services/c",
+      "password/services/d"
+    ]
+  },
+  "bitwarden": {
+	"local": true,
+	"addr": "http://localhost:8087",
+    "paths": [
+      "password/services/e",
+      "password/services/f"
+    ]
+  }
+}
