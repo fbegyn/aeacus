@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"time"
 
 	vault "github.com/hashicorp/vault/api"
+	"golang.org/x/exp/slog"
 )
 
 // StartBWServe starts up the local API endpoint in the background and
@@ -19,7 +19,7 @@ import (
 func StartBWServe(ctx context.Context) {
 	cmd := exec.Command("bw", "serve")
 	if err := cmd.Start(); err != nil {
-		log.Fatalf("bitwarden: failed to run 'bw serve': %v", err)
+		slog.Error("failed to run 'bw serve'", err, slog.String("component", "bitwarden"))
 	}
 	<-ctx.Done()
 	cmd.Process.Kill()
@@ -28,16 +28,16 @@ func StartBWServe(ctx context.Context) {
 func (bw *BitwardenClient) BWSync(client *vault.Client, mount, path string) error {
 	secret, err := client.KVv2(mount).Get(context.Background(), path)
 	if err != nil {
-		log.Fatalf("bitwarden: unable to read secret from vault: %v", err)
+		return fmt.Errorf("unable to read secret from vault: %v", err)
 	}
 	userValue, ok := secret.Data[bw.UserField].(string)
 	if !ok {
-		log.Printf("bitwarden: value type assertion failed: %T %#v", secret.Data[bw.UserField], secret.Data[bw.UserField])
+		return fmt.Errorf("value type assertion failed for user field")
 	}
 
 	passValue, ok := secret.Data[bw.PassField].(string)
 	if !ok {
-		log.Fatalf("bitwarden: value type assertion failed: %T %#v", secret.Data[bw.PassField], secret.Data[bw.PassField])
+		return fmt.Errorf("value type assertion failed for password field")
 	}
 
 	fmt.Println(userValue)
@@ -80,9 +80,30 @@ func (bw *BitwardenClient) CreateItem(item []byte) error {
 	var createResp CreateResp
 	json.NewDecoder(resp.Body).Decode(&createResp)
 	if !createResp.Success {
-		log.Fatalf("bitwarden: failed to create object: %v", resp)
-	} else {
-		log.Printf("bitwarden: created object: %v", createResp)
+		return fmt.Errorf("bitwarden: failed to create object: %v", resp)
+	}
+	return nil
+}
+
+type DeleteResp struct {
+	Success bool
+}
+
+func (bw *BitwardenClient) DeleteItem(item []byte) error {
+	req, err := http.NewRequest("DELETE", bw.BaseURL+"/object/item", bytes.NewBuffer(item))
+	if err != nil {
+		return fmt.Errorf("bitwarden: failed to delete request for BW: %w", err)
+	}
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := bw.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("bitwarden: failed to delete password from bitwarden: %w", err)
+	}
+	defer resp.Body.Close()
+	var createResp DeleteResp
+	json.NewDecoder(resp.Body).Decode(&createResp)
+	if !createResp.Success {
+		return fmt.Errorf("bitwarden: failed to delete object: %v", resp)
 	}
 	return nil
 }
@@ -107,6 +128,9 @@ func NewBitwardenClient(conf Config) (BitwardenClient, error) {
 		PassField: conf.Vault.PassField,
 	}
 
+	if os.Getenv("BW_PASSWORD") == "" {
+		return BitwardenClient{}, fmt.Errorf("bitwarden password not set in BW_PASSWORD")
+	}
 	loginCred := map[string]string{
 		"password": os.Getenv("BW_PASSWORD"),
 	}

@@ -1,6 +1,6 @@
-module github.com/fbegyn/vaultbw
+module github.com/fbegyn/aeacus
 
-go 1.19
+go 1.20
 
 require (
 	github.com/hashicorp/vault/api v1.9.0
@@ -12,6 +12,7 @@ require (
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/fatih/color v1.15.0 // indirect
+	github.com/fbegyn/bitwarden-api v0.0.0-20230419222202-f2b957f23e28 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -44,6 +45,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

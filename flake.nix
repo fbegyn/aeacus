@@ -1,5 +1,5 @@
 {
-  description = "vaultbw";
+  description = "aeacus";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -20,9 +20,9 @@
       in
       {
         devShells = rec {
-          default = vaultbw;
-          vaultbw = pkgs.devshell.mkShell {
-            name = "vaultbw";
+          default = aeacus;
+          aeacus = pkgs.devshell.mkShell {
+            name = "aeacus";
             packages = [
               pkgs.vault-bin
               pkgs.bitwarden

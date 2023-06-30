@@ -32,21 +32,30 @@ func VaultSync(vc *vault.Client, resp ListResp, mount, prefix string) error {
 func VaultWrite(vc *vault.Client, mount, path string, data map[string]interface{}) error {
 	_, err := vc.KVv2(mount).Put(context.Background(), path, data)
 	if err != nil {
-		log.Fatalf("vault: unable to write secret: %v", err)
+		return fmt.Errorf("vault: unable to write secret: %v", err)
+	}
+	return nil
+}
+
+// VaultDestroy deletes the k/v at the path
+func VaultDestroy(vc *vault.Client, mount, path string) error {
+	err := vc.KVv2(mount).DeleteMetadata(context.Background(), path)
+	if err != nil {
+		return fmt.Errorf("vault: unable to delete metadata secret: %v", err)
 	}
 	return nil
 }
 
 // renewToken is the asynchronoous function that will keep the access token alive for vault access
-func renewToken(client *vault.Client) {
+func renewToken(client *vault.Client, errs chan<- error) {
 	for {
 		vaultLoginResp, err := UserLogin(client)
 		if err != nil {
-			log.Fatalf("vault: unable to authenticate: %w", err)
+			errs <- fmt.Errorf("vault: unable to authenticate: %w", err)
 		}
 		tokenErr := manageTokenLifeCycle(client, vaultLoginResp)
 		if tokenErr != nil {
-			log.Fatalf("vault: failed to renew token: %w", err)
+			errs <- fmt.Errorf("vault: failed to renew token: %w", err)
 		}
 	}
 }
@@ -55,8 +64,7 @@ func renewToken(client *vault.Client) {
 func manageTokenLifeCycle(client *vault.Client, token *vault.Secret) error {
 	renew := token.Auth.Renewable
 	if !renew {
-		log.Printf("vault: Token is not configured for renew, re-attempting login")
-		return nil
+		return fmt.Errorf("vault: Token is not configured for renew, re-attempting login")
 	}
 
 	watcher, err := client.NewLifetimeWatcher(&vault.LifetimeWatcherInput{
@@ -74,10 +82,8 @@ func manageTokenLifeCycle(client *vault.Client, token *vault.Secret) error {
 		select {
 		case err := <-watcher.DoneCh():
 			if err != nil {
-				log.Printf("vault: failed to renew token, re-attempting login: %w", err)
-				return nil
+				return fmt.Errorf("vault: failed to renew token, re-attempting login: %w", err)
 			}
-			log.Printf("vault: failed to renew token, re-attempting login")
 			return nil
 		case renewal := <-watcher.RenewCh():
 			log.Printf("vault: succesfully updated the token: %#v", renewal)

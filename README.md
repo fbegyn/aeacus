@@ -1,4 +1,4 @@
-# Vault/Bitwarden sync WIP
+# aeacus
 
 This is a silly idea that I said in a meeting that I'm starting to regert but I
 said it and now I have to deal with this cursed thing I'm creating.
@@ -17,7 +17,7 @@ Set the following env variables:
 and then just do:
 
 ```bash
-go run ./cmd/vaultbw
+go run ./cmd/aeacus
 ```
 
 ## Config file

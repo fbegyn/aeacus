@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/fbegyn/bitwarden-api"
 	vault "github.com/hashicorp/vault/api"
+	"golang.org/x/exp/slog"
 )
 
 type Config struct {
@@ -40,14 +41,19 @@ func ParseConfig(path string) (Config, error) {
 }
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout).
+		WithAttrs([]slog.Attr{slog.String("app", "aeacus"), slog.String("version", "development")}))
+
 	ctx := context.Background()
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
+	slog.SetDefault(logger)
+	slog.Info("starting aeacus")
 
 	internal, err := ParseConfig("./config.json")
 	if err != nil {
-		log.Fatal("failed to parse config file")
+		slog.Error("failed to parse config file")
 	}
 
 	// setup the accesss to vault from the client
@@ -55,34 +61,39 @@ func main() {
 	config.Address = internal.Vault.Addr
 	client, err := vault.NewClient(config)
 	if err != nil {
-		log.Fatal("failed to create fault client")
+		slog.Error("failed to create default client")
 	}
 
 	// start up the token lifecycle management for vault
+	errChan := make(chan error)
 	if os.Getenv("VAULT_TOKEN") == "" {
-		go renewToken(client)
+		go renewToken(client, errChan)
 	}
 
 	if internal.Bitwarden.Local {
-		go StartBWServe(ctx)
-		log.Print("waiting for bw serve to start up")
-		time.Sleep(1 * time.Second)
+		go bitwarden.StartBWServe(ctx)
+		slog.Info("waiting for bw to start up", slog.String("component", "bitwarden"))
+		time.Sleep(5 * time.Second)
 	}
 
+	bwConfig := bitwarden.Config{
+		Addr: internal.Bitwarden.Addr,
+	}
 	// start up interaction with Bitwarden
-	bwClient, err := NewBitwardenClient(internal)
+	bwClient, err := bitwarden.NewBitwardenClient(bwConfig)
 	if err != nil {
-		log.Fatalf("failed to login to bw: %v", err)
+		slog.Error("failed to login to bw", err, slog.String("component", "bitwarden"))
+		os.Exit(10)
 	}
 
 	// start actually doing sync stuff between Vault and Bitwarden
 	// Sync Bitwarden passwords to vault
 	for _, path := range internal.Vault.Paths {
-		log.Printf("vault: writing %s/%s from bitwarden %s\n", internal.Vault.MountPath, path, internal.Bitwarden.Addr)
+		slog.Info("writing from bitwarden to vault", slog.String("vault-path", internal.Vault.MountPath), slog.String("bw-path", path), slog.String("bw-addr", internal.Bitwarden.Addr), slog.String("component", "vault"))
 		// lookup the path in bitwarden
 		resp, err := bwClient.List(path)
 		if err != nil {
-			log.Fatalf("failed to list bitwarden: %v", err)
+			slog.Error("failed to list bitwarden", err, slog.String("component", "vault"))
 		}
 
 		//pass it along to the vault client
@@ -91,13 +102,16 @@ func main() {
 
 	// Sync Vault passwords to Bitwarden
 	for _, path := range internal.Bitwarden.Paths {
-		log.Printf("bitwarden: syncing %s from vault %s\n", path, internal.Vault.Addr)
-		bwClient.BWSync(client, internal.Vault.MountPath, path)
+		slog.Info("syncing from vault to bitwarden", slog.String("bw-path", path), slog.String("vault-addr", internal.Vault.Addr), slog.String("component", "bitwarden"))
+		err := bwClient.BWSync(client, internal.Vault.MountPath, path)
+		if err != nil {
+			slog.Error("failure to sync to bitwarden", err, slog.String("component", "bitwarden"))
+		}
 	}
 
-	log.Printf("bitwarden: locking vault")
+	slog.Info("locking vault", slog.String("component", "bitwarden"))
 	err = bwClient.Lock()
 	if err != nil {
-		log.Fatalf("failed to lock bitwarden: %v", err)
+		slog.Error("failed to lock bitwarden", err, slog.String("component", "bitwarden"))
 	}
 }
