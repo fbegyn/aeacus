@@ -10,41 +10,41 @@ import (
 	user "github.com/hashicorp/vault/api/auth/userpass"
 )
 
-// VaultSync synchronises the vault path with the provided ListResponse from bitwarden
-// It fetches fata from Bitwarden and writes into Vault
-func VaultSync(vc *vault.Client, resp ListResp, mount, prefix string) error {
-	for _, v := range resp.Data.Data {
-		name := v["name"].(string)
-		data, err := DataFromBWItem(v)
-		if err != nil {
-			return fmt.Errorf("failed to parse BW item: %w", err)
-		}
-
-		err = VaultWrite(vc, mount, prefix+name, data)
-		if err != nil {
-			return fmt.Errorf("vault: failed to sync to vault: %w", err)
-		}
-	}
-	return nil
-}
-
-// VaultWrite writes a single instance of data to the vault
-func VaultWrite(vc *vault.Client, mount, path string, data map[string]interface{}) error {
-	_, err := vc.KVv2(mount).Put(context.Background(), path, data)
-	if err != nil {
-		return fmt.Errorf("vault: unable to write secret: %v", err)
-	}
-	return nil
-}
-
-// VaultDestroy deletes the k/v at the path
-func VaultDestroy(vc *vault.Client, mount, path string) error {
-	err := vc.KVv2(mount).DeleteMetadata(context.Background(), path)
-	if err != nil {
-		return fmt.Errorf("vault: unable to delete metadata secret: %v", err)
-	}
-	return nil
-}
+// // VaultSync synchronises the vault path with the provided ListResponse from bitwarden
+// // It fetches fata from Bitwarden and writes into Vault
+// func VaultSync(vc *vault.Client, resp ListResp, mount, prefix string) error {
+// 	for _, v := range resp.Data.Data {
+// 		name := v["name"].(string)
+// 		data, err := DataFromBWItem(v)
+// 		if err != nil {
+// 			return fmt.Errorf("failed to parse BW item: %w", err)
+// 		}
+//
+// 		err = VaultWrite(vc, mount, prefix+name, data)
+// 		if err != nil {
+// 			return fmt.Errorf("vault: failed to sync to vault: %w", err)
+// 		}
+// 	}
+// 	return nil
+// }
+//
+// // VaultWrite writes a single instance of data to the vault
+// func VaultWrite(vc *vault.Client, mount, path string, data map[string]interface{}) error {
+// 	_, err := vc.KVv2(mount).Put(context.Background(), path, data)
+// 	if err != nil {
+// 		return fmt.Errorf("vault: unable to write secret: %v", err)
+// 	}
+// 	return nil
+// }
+//
+// // VaultDestroy deletes the k/v at the path
+// func VaultDestroy(vc *vault.Client, mount, path string) error {
+// 	err := vc.KVv2(mount).DeleteMetadata(context.Background(), path)
+// 	if err != nil {
+// 		return fmt.Errorf("vault: unable to delete metadata secret: %v", err)
+// 	}
+// 	return nil
+// }
 
 // renewToken is the asynchronoous function that will keep the access token alive for vault access
 func renewToken(client *vault.Client, errs chan<- error) {

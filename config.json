@@ -1,20 +1,32 @@
 {
-  "vault": {
-    "userfield": "username",
-    "passfield": "password",
-    "addr": "http://localhost:8200",
-    "mountpath": "secret",
-    "paths": [
-      "password/services/a",
-      "password/services/b",
-      "password/services/c"
-    ]
-  },
   "bitwarden": {
-    "local": true,
-    "addr": "http://localhost:8087",
-    "paths": [
-      "password/services/d"
-    ]
-  }
+    "local": true
+  },
+  "repos": [
+    {
+      "id": "vault-test",
+      "type": "vault",
+      "userfield": "username",
+      "passfield": "password",
+      "addr": "http://localhost:8200",
+      "mountpath": "secret",
+      "paths": [
+        "password/services/a",
+        "password/services/b",
+        "password/services/c"
+      ]
+    },
+    {
+      "id": "bw-test",
+      "type": "bitwarden",
+      "userfield": "username",
+      "passfield": "password",
+      "addr": "http://localhost:8087",
+      "paths": [
+        "password/services/d",
+        "password/services/e",
+        "password/services/f"
+      ]
+    }
+  ]
 }

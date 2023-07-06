@@ -45,7 +45,7 @@
                 category = "database";
                 help = "create vault tmp data dir";
                 command = ''
-                  mkdir $PWD/tmp/vault
+                  mkdir -p $PWD/tmp/vault
                 '';
               }
               {
