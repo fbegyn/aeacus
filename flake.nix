@@ -24,8 +24,8 @@
           aeacus = pkgs.devshell.mkShell {
             name = "aeacus";
             packages = [
-              pkgs.vault-bin
-              pkgs.bitwarden
+              pkgs.vault
+              pkgs.bitwarden-cli
               pkgs.nixpkgs-fmt
               pkgs.go_1_20
             ];
