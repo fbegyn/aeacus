@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"time"
@@ -34,7 +33,7 @@ type Repo struct {
 }
 
 func ParseConfig(path string) (Config, error) {
-	filebuffer, err := ioutil.ReadFile(path)
+	filebuffer, err := os.ReadFile(path)
 	if err != nil {
 		return Config{}, fmt.Errorf("failed to read config: %w", err)
 	}
