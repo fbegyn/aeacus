@@ -1,6 +1,6 @@
 module github.com/fbegyn/aeacus
 
-go 1.20
+go 1.19
 
 require (
 	github.com/fbegyn/bitwarden-api v0.0.0-20230706225504-a7b731b6b392
