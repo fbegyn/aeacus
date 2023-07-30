@@ -62,6 +62,10 @@ func main() {
 	// Parse command line arguments
 	flag.Parse()
 	args := flag.Args()
+	if len(args) != 2 {
+		slog.Error("incorrect amount of arguments for password repositories. Please provide 2 arguments as reposotiry")
+		os.Exit(10)
+	}
 	srcRepoID := args[0]
 	dstRepoID := args[1]
 
