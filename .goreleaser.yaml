@@ -1,0 +1,55 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    main: ./cmd/aeacus
+archives:
+  - id: arch
+    name_template: >-
+        {{ .ProjectName }}_
+        {{- title .Os }}_
+        {{- if eq .Arch "amd64" }}x86_64
+        {{- else if eq .Arch "386" }}i386
+        {{- else }}{{ .Arch }}{{ end }}
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+nfpms:
+  - package_name: "aeacus"
+    section: "default"
+    priority: "extra"
+    maintainer: "Francis Begyn <francis@begyn.be>"
+    description: |
+      Aeacus is the bridge between all your secret holding software.
+    homepage: "https://github.com/fbegyn/aeacus"
+    license: "MIT"
+    bindir: /usr/local/bin
+    contents:
+      - src: ./config.json
+        dst: /etc/aeacus/config.json
+        type: config|noreplace
+    formats:
+      - apk
+      - deb
+      - rpm
+
